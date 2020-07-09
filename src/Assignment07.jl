@@ -1,6 +1,9 @@
 module Assignment07
 
-export normalizeDNA
+export normalizeDNA,
+       composition,
+       gc_content,
+       parse_fasta
 
 # # uncomment the following line if you intend to use BioSequences types
 # using BioSequences
@@ -21,9 +24,43 @@ function normalizeDNA(seq)
     return seq # change to `return LongDNASeq(seq)` if you want to try to use BioSequences types
 end
 
+function composition(seq)
+    seq = uppercase(seq)
+    
+    for b in seq
+        !occursin(b, "ATGCN") && error("Invalid base, $b")
+    end
+    counts = Dict(b=>0 for b in collect("ATGCN"))
+    for base in seq
+        counts[base] += 1
+    end
+    return counts
+end
 
-# Your code here.
-# Don't forget to export your functions!
+function gc_content(seq)
+    c = composition(seq)
+    return (c['G'] + c['C']) / length(seq)
+end
 
+
+function parse_fasta(path)
+    headers = String[]
+    seqs = String[]
+    curseq = String[]
+    for line in eachline(path)
+        if startswith(line, ">")
+            push!(headers, line[2:end])
+            if length(curseq) > 0
+                push!(seqs, join(curseq))
+                curseq = String[]
+            end
+        else
+            line = normlizeDNA(line)
+            push!(curseq, line)
+        end
+    end
+    length(curseq) > 0 && push!(seqs, join(curseq))
+    return headers, seqs
+end
 
 end # module Assignment07
