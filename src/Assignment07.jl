@@ -3,6 +3,8 @@ module Assignment07
 export normalizeDNA,
        composition,
        gc_content,
+       complement,
+       reverse_complement,
        parse_fasta
 
 # # uncomment the following line if you intend to use BioSequences types
@@ -42,6 +44,20 @@ function gc_content(seq)
     return (c['G'] + c['C']) / length(seq)
 end
 
+function complement(base::Char)
+    comp = Dict('A'=>'T',
+                'T'=>'A',
+                'G'=>'C',
+                'C'=>'G',
+                'N'=>'N')
+    return comp[uppercase(base)]
+end
+
+function complement(seq::AbstractString)
+    return join(map(complement, collect(seq)))
+end
+
+reverse_complement(seq) = reverse(complement(seq))
 
 function parse_fasta(path)
     headers = String[]
@@ -55,7 +71,7 @@ function parse_fasta(path)
                 curseq = String[]
             end
         else
-            line = normlizeDNA(line)
+            line = normalizeDNA(line)
             push!(curseq, line)
         end
     end
