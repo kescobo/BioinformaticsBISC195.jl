@@ -1,4 +1,4 @@
-module Assignment07
+module BioinformaticsBISC195
 
 export normalizeDNA,
        composition,
@@ -26,4 +26,4 @@ function normalizeDNA(seq)
     return seq # change to `return LongDNASeq(seq)` if you want to try to use BioSequences types
 end
 
-end # module Assignment07
+end # module BioinformaticsBISC195
