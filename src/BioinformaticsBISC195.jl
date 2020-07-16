@@ -1,11 +1,17 @@
 module BioinformaticsBISC195
 
-export normalizeDNA,
+export FastaRecord,
+       header,
+       sequence,
+       sequence!,
+       normalizeDNA,
        composition,
        gc_content,
        complement,
        reverse_complement,
-       parse_fasta
+       parse_fasta,
+       uniquekmers,
+       kmer_distance
 
 # # uncomment the following line if you intend to use BioSequences types
 # using BioSequences
@@ -21,36 +27,32 @@ function normalizeDNA(seq)
     seq = uppercase(string(seq))
     for base in seq
         # note: `N` indicates an unknown base
-        occursin(base, "AGCTN") || error("invalid base $base")
+        occursin(base, "AGCTNYRWMKSHVDB") || error("invalid base $base")
     end
     return seq # change to `return LongDNASeq(seq)` if you want to try to use BioSequences types
 end
 
 function composition(seq)
-    seq = uppercase(seq)
-    
-    for b in seq
-        !occursin(b, "ATGCN") && error("Invalid base, $b")
-    end
+    seq = normalizeDNA(seq)
     counts = Dict(b=>0 for b in collect("ATGCN"))
     for base in seq
-        counts[base] += 1
+        haskey(counts, base) ? counts[base] += 1 : counts['N'] +=1
     end
     return counts
 end
 
 function gc_content(seq)
     c = composition(seq)
-    return (c['G'] + c['C']) / length(seq)
+    return (c['G'] + c['C']) / sum(c[b] for b in "ATGC")
 end
 
 function complement(base::Char)
+    base = uppercase(base)
     comp = Dict('A'=>'T',
                 'T'=>'A',
                 'G'=>'C',
-                'C'=>'G',
-                'N'=>'N')
-    return comp[uppercase(base)]
+                'C'=>'G')
+    haskey(comp, base) ? comp[base] : "blah"
 end
 
 function complement(seq::AbstractString)
@@ -82,6 +84,9 @@ function sequence!(fr::FastaRecord, seq::AbstractString)
     fr.sequence = seq
 end
 
+Base.length(fr::FastaRecord) = length(sequence(fr))
+gc_content(fr::FastaRecord) = gc_content(sequence(fr))
+
 function parse_fasta(path)
     records = FastaRecord[]
     for line in eachline(path)
@@ -98,5 +103,30 @@ function parse_fasta(path)
     end
     return records
 end
+
+function uniquekmers(seq::AbstractString, k::Int)
+    kmers = String[]
+    i = 1
+    e = lastindex(seq)-k+1
+    while i < e
+        kmer = seq[i:i+k-1]
+        if !all(c-> occursin(c, "ATGC"), kmer)
+            i += k
+        else
+            push!(kmers, kmer)
+            i +=1
+        end
+    end
+    return Set(kmers)
+end
+
+uniquekmers(record::FastaRecord, k::Int) = uniquekmers(sequence(record), k)
+
+# function kmer_distance(k1, k2)
+#     u = union(k1, k2)
+#     i = intersect(k1,k2)
+
+#     return 1 - length(i) / length(u)
+# end
 
 end # module BioinformaticsBISC195
